@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "SmartDesk",
+    "slug": "smartdesk-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#1e1e1e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.smartdesk.mobile"
+    },
+    "android": {
+      "package": "com.smartdesk.mobile",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "apiUrl": "https://meuapp.local/api"
+    }
+  }
+}

@@ -21,7 +21,7 @@
       "bundler": "metro"
     },
     "extra": {
-      "apiUrl": "https://meuapp.local/api"
+      "apiUrl": "http://10.10.38.9/api"
     }
   }
 }

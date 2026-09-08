@@ -4,7 +4,7 @@ import Constants from "expo-constants";
 // Set EXPO_PUBLIC_API_URL in a .env file, or edit `extra.apiUrl` in app.json.
 // Note: on a physical device running Expo Go, "localhost" points at the phone
 // itself — use your machine's LAN IP (e.g. http://192.168.0.10:3000) instead.
-const BASE_URL =
+export const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (Constants.expoConfig?.extra?.apiUrl as string) ||
   "https://meuapp.local/api";
@@ -24,7 +24,9 @@ export async function clearToken() {
   await AsyncStorage.removeItem(TOKEN_KEY);
 }
 
-export async function getUser<T = Record<string, unknown>>(): Promise<T | null> {
+export async function getUser<
+  T = Record<string, unknown>,
+>(): Promise<T | null> {
   const raw = await AsyncStorage.getItem(USER_KEY);
   return raw ? (JSON.parse(raw) as T) : null;
 }
@@ -48,8 +50,9 @@ export function setOnSessionExpired(cb: (() => void) | null) {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = await getToken();
+  const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...((options.headers as Record<string, string>) || {}),
   };
 
@@ -84,6 +87,8 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T, B = unknown>(path: string, body: B) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
+  postForm: <T>(path: string, body: FormData) =>
+    request<T>(path, { method: "POST", body }),
   patch: <T, B = unknown>(path: string, body: B) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   put: <T, B = unknown>(path: string, body: B) =>

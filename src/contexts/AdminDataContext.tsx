@@ -1,6 +1,23 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
 import { useUser } from "./UserContext";
-import { Ticket, Departamento, Usuario, Status, Categoria, Prioridade, Permissao, Empresa } from "../types";
+import {
+  Ticket,
+  Departamento,
+  Usuario,
+  Status,
+  Categoria,
+  Prioridade,
+  Permissao,
+  Empresa,
+  ImagemSelecionada,
+} from "../types";
 import {
   getTicketsByEmpresa,
   getTicketsWithFilter,
@@ -9,6 +26,7 @@ import {
   updateTicketStatus,
   deleteTicket as deleteTicketApi,
   TicketResponse,
+  uploadTicketAttachment,
 } from "../services/ticketService";
 import { getEmpresa } from "../services/empresaService";
 import {
@@ -35,9 +53,10 @@ function mapApiToTicket(t: TicketResponse): Ticket {
     prioridade: t.prioridade as Prioridade,
     departamento: t.departamento.nome,
     id_departamento: t.departamento.id,
-    created_at: new Date().toISOString(),
+    created_at: t.created_at,
     id_usuario: t.usuario.id,
     id_empresa: t.empresa.id,
+    anexos: t.anexos || [],
   };
 }
 
@@ -51,9 +70,24 @@ interface AdminDataContextType {
   reload: () => Promise<void>;
   loadTicketsWithFilter: (status: Status | "todos") => Promise<void>;
   handleStatusChange: (ticketId: number, status: Status) => Promise<void>;
-  saveTicket: (t: Partial<Ticket> & { titulo: string; descricao: string; categoria: Categoria; prioridade: Prioridade; id_departamento: number; id_usuario?: number }) => Promise<void>;
+  saveTicket: (
+    t: Partial<Ticket> & {
+      titulo: string;
+      descricao: string;
+      categoria: Categoria;
+      prioridade: Prioridade;
+      id_departamento: number;
+      id_usuario?: number;
+      anexo?: ImagemSelecionada | null;
+    },
+  ) => Promise<void>;
   deleteTicket: (id: number) => Promise<void>;
-  createUser: (data: { nome: string; email: string; cpf: string; senha: string }) => Promise<void>;
+  createUser: (data: {
+    nome: string;
+    email: string;
+    cpf: string;
+    senha: string;
+  }) => Promise<void>;
   deleteUser: (id: number) => Promise<void>;
   aprovarUsuario: (id: number) => Promise<void>;
   rejeitarUsuario: (id: number) => Promise<void>;
@@ -75,20 +109,37 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [depts, setDepts] = useState<Departamento[]>([]);
 
   const reload = useCallback(async () => {
-    const [empresaRes, ticketsRes, deptsRes, usersRes, pendentesRes] = await Promise.allSettled([
-      getEmpresa(idEmpresa),
-      getTicketsByEmpresa(idEmpresa),
-      getDepartamentosByEmpresa(idEmpresa),
-      getUsuariosByEmpresa(idEmpresa),
-      getUsuariosPendentes(idEmpresa),
-    ]);
+    const [empresaRes, ticketsRes, deptsRes, usersRes, pendentesRes] =
+      await Promise.allSettled([
+        getEmpresa(idEmpresa),
+        getTicketsByEmpresa(idEmpresa),
+        getDepartamentosByEmpresa(idEmpresa),
+        getUsuariosByEmpresa(idEmpresa),
+        getUsuariosPendentes(idEmpresa),
+      ]);
     if (empresaRes.status === "fulfilled") setEmpresa(empresaRes.value);
-    if (ticketsRes.status === "fulfilled") setTickets(ticketsRes.value.map(mapApiToTicket));
-    if (deptsRes.status === "fulfilled") setDepts(deptsRes.value.map((d) => ({ ...d, id_empresa: idEmpresa })));
+    if (ticketsRes.status === "fulfilled")
+      setTickets(ticketsRes.value.map(mapApiToTicket));
+    if (deptsRes.status === "fulfilled")
+      setDepts(deptsRes.value.map((d) => ({ ...d, id_empresa: idEmpresa })));
     if (usersRes.status === "fulfilled")
-      setUsers(usersRes.value.map((u) => ({ ...u, permissao: "usuario" as Permissao, ativo: true, id_empresa: idEmpresa })));
+      setUsers(
+        usersRes.value.map((u) => ({
+          ...u,
+          permissao: "usuario" as Permissao,
+          ativo: true,
+          id_empresa: idEmpresa,
+        })),
+      );
     if (pendentesRes.status === "fulfilled")
-      setPendentes(pendentesRes.value.map((u) => ({ ...u, permissao: "usuario" as Permissao, ativo: false, id_empresa: idEmpresa })));
+      setPendentes(
+        pendentesRes.value.map((u) => ({
+          ...u,
+          permissao: "usuario" as Permissao,
+          ativo: false,
+          id_empresa: idEmpresa,
+        })),
+      );
   }, [idEmpresa]);
 
   useEffect(() => {
@@ -102,54 +153,81 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const loadTicketsWithFilter = useCallback(
     async (status: Status | "todos") => {
       try {
-        const filters = status === "todos" ? { id_empresa: idEmpresa } : { status, id_empresa: idEmpresa };
+        const filters =
+          status === "todos"
+            ? { id_empresa: idEmpresa }
+            : { status, id_empresa: idEmpresa };
         const res = await getTicketsWithFilter(filters);
         setTickets(res.map(mapApiToTicket));
       } catch (err) {
         console.error("Erro ao filtrar tickets:", err);
       }
     },
-    [idEmpresa]
+    [idEmpresa],
   );
 
-  const handleStatusChange = useCallback(async (ticketId: number, status: Status) => {
-    try {
-      const updated = await updateTicketStatus(ticketId, status);
-      setTickets((p) => p.map((t) => (t.id === ticketId ? mapApiToTicket(updated) : t)));
-    } catch (err) {
-      console.error("Erro ao atualizar status:", err);
-    }
-  }, []);
+  const handleStatusChange = useCallback(
+    async (ticketId: number, status: Status) => {
+      try {
+        const updated = await updateTicketStatus(ticketId, status);
+        setTickets((p) =>
+          p.map((t) => (t.id === ticketId ? mapApiToTicket(updated) : t)),
+        );
+      } catch (err) {
+        console.error("Erro ao atualizar status:", err);
+      }
+    },
+    [],
+  );
 
   const saveTicket = useCallback(
-    async (t: Partial<Ticket> & { titulo: string; descricao: string; categoria: Categoria; prioridade: Prioridade; id_departamento: number; id_usuario?: number }) => {
+    async (
+      t: Partial<Ticket> & {
+        titulo: string;
+        descricao: string;
+        categoria: Categoria;
+        prioridade: Prioridade;
+        id_departamento: number;
+        id_usuario?: number;
+        anexo?: ImagemSelecionada | null;
+      },
+    ) => {
       try {
         if (t.id) {
-          const updated = await updateTicket(t.id, {
+          const previous = tickets.find((item) => item.id === t.id);
+          let updated = await updateTicket(t.id, {
             titulo: t.titulo,
             descricao: t.descricao,
-            status: t.status,
             categoria: t.categoria,
             prioridade: t.prioridade,
           });
-          setTickets((p) => p.map((x) => (x.id === t.id ? mapApiToTicket(updated) : x)));
+          if (t.status && previous && t.status !== previous.status) {
+            updated = await updateTicketStatus(t.id, t.status);
+          }
+          if (t.anexo) updated = await uploadTicketAttachment(t.id, t.anexo);
+          setTickets((p) =>
+            p.map((x) => (x.id === t.id ? mapApiToTicket(updated) : x)),
+          );
         } else {
-          const created = await createTicket({
-            titulo: t.titulo,
-            descricao: t.descricao,
-            categoria: t.categoria,
-            prioridade: t.prioridade,
-            id_empresa: idEmpresa,
-            id_usuario: t.id_usuario || 0,
-            id_departamento: t.id_departamento,
-          });
+          const created = await createTicket(
+            {
+              titulo: t.titulo,
+              descricao: t.descricao,
+              categoria: t.categoria,
+              prioridade: t.prioridade,
+              id_empresa: idEmpresa,
+              id_usuario: t.id_usuario || 0,
+              id_departamento: t.id_departamento,
+            },
+            t.anexo,
+          );
           setTickets((p) => [...p, mapApiToTicket(created)]);
         }
       } catch (err) {
         console.error("Erro ao salvar ticket:", err);
       }
     },
-    [idEmpresa]
+    [idEmpresa, tickets],
   );
 
   const deleteTicket = useCallback(async (id: number) => {
@@ -164,28 +242,43 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const reloadUsers = useCallback(async () => {
     try {
       const usersRes = await getUsuariosByEmpresa(idEmpresa);
-      setUsers(usersRes.map((u) => ({ ...u, permissao: "usuario" as Permissao, ativo: true, id_empresa: idEmpresa })));
+      setUsers(
+        usersRes.map((u) => ({
+          ...u,
+          permissao: "usuario" as Permissao,
+          ativo: true,
+          id_empresa: idEmpresa,
+        })),
+      );
     } catch (err) {
       console.error("Erro ao recarregar usuários:", err);
     }
   }, [idEmpresa]);
 
   const createUser = useCallback(
-    async (data: { nome: string; email: string; cpf: string; senha: string }) => {
+    async (data: {
+      nome: string;
+      email: string;
+      cpf: string;
+      senha: string;
+    }) => {
       await createUsuario({ ...data, id_empresa: idEmpresa });
       await reloadUsers();
     },
-    [idEmpresa, reloadUsers]
+    [idEmpresa, reloadUsers],
   );
 
-  const deleteUser = useCallback(async (id: number) => {
-    try {
-      await deleteUsuarioApi(idEmpresa, id);
-      setUsers((p) => p.filter((u) => u.id !== id));
-    } catch (err) {
-      console.error("Erro ao remover usuário:", err);
-    }
-  }, [idEmpresa]);
+  const deleteUser = useCallback(
+    async (id: number) => {
+      try {
+        await deleteUsuarioApi(idEmpresa, id);
+        setUsers((p) => p.filter((u) => u.id !== id));
+      } catch (err) {
+        console.error("Erro ao remover usuário:", err);
+      }
+    },
+    [idEmpresa],
+  );
 
   const aprovarUsuario = useCallback(
     async (id: number) => {
@@ -197,7 +290,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         console.error("Erro ao aprovar usuário:", err);
       }
     },
-    [idEmpresa, reloadUsers]
+    [idEmpresa, reloadUsers],
   );
 
   const rejeitarUsuario = useCallback(
@@ -209,7 +302,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         console.error("Erro ao rejeitar usuário:", err);
       }
     },
-    [idEmpresa]
+    [idEmpresa],
   );
 
   const reloadDepts = useCallback(async () => {
@@ -234,7 +327,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         console.error("Erro ao salvar departamento:", err);
       }
     },
-    [idEmpresa, reloadDepts]
+    [idEmpresa, reloadDepts],
   );
 
   const deleteDept = useCallback(
@@ -246,7 +339,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         console.error("Erro ao remover departamento:", err);
       }
     },
-    [idEmpresa]
+    [idEmpresa],
   );
 
   return (
@@ -278,6 +371,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
 export function useAdminData() {
   const ctx = useContext(AdminDataContext);
-  if (!ctx) throw new Error("useAdminData must be used within AdminDataProvider");
+  if (!ctx)
+    throw new Error("useAdminData must be used within AdminDataProvider");
   return ctx;
 }

@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { Anexo, ImagemSelecionada } from "../types";
 
 export interface TicketResponse {
   id: number;
@@ -8,6 +9,9 @@ export interface TicketResponse {
   status: string;
   categoria: string;
   prioridade: string;
+  created_at: string;
+  updated_at: string;
+  anexos: Anexo[];
   departamento: { id: number; nome: string };
   usuario: { id: number; nome: string; email: string };
   empresa: { id: number; razao_social: string; email: string };
@@ -51,8 +55,32 @@ export function getTicketById(id: number) {
   return api.get<TicketResponse>(`/ticket/one/${id}`);
 }
 
-export function createTicket(data: CreateTicketPayload) {
-  return api.post<TicketResponse>("/ticket", data);
+function appendImage(form: FormData, image: ImagemSelecionada) {
+  form.append("anexo", {
+    uri: image.uri,
+    name: image.nome,
+    type: image.mime_type,
+  } as unknown as Blob);
+}
+
+export function createTicket(
+  data: CreateTicketPayload,
+  image?: ImagemSelecionada | null,
+) {
+  if (!image) return api.post<TicketResponse>("/ticket", data);
+
+  const form = new FormData();
+  Object.entries(data).forEach(([key, value]) =>
+    form.append(key, String(value)),
+  );
+  appendImage(form, image);
+  return api.postForm<TicketResponse>("/ticket", form);
+}
+
+export function uploadTicketAttachment(id: number, image: ImagemSelecionada) {
+  const form = new FormData();
+  appendImage(form, image);
+  return api.postForm<TicketResponse>(`/ticket/${id}/anexos`, form);
 }
 
 export function updateTicket(id: number, data: UpdateTicketPayload) {

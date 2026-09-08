@@ -6,6 +6,14 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permita que o SmartDesk acesse suas fotos para anexar imagens aos tickets."
+        }
+      ]
+    ],
     "splash": {
       "backgroundColor": "#1e1e1e"
     },

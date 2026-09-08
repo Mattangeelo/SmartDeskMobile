@@ -7,6 +7,7 @@ import {
   FlatList,
   ScrollView,
   ActivityIndicator,
+  Alert,
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,14 +15,29 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { colors, radius, spacing } from "../theme/colors";
 import { useUser } from "../contexts/UserContext";
-import { getTicketsByEmpresa, createTicket, TicketResponse } from "../services/ticketService";
-import { getDepartamentosByEmpresa, DepartamentoResponse } from "../services/departamentoService";
-import { Ticket, Departamento, Status, Categoria, Prioridade } from "../types";
+import {
+  getTicketsByEmpresa,
+  createTicket,
+  TicketResponse,
+} from "../services/ticketService";
+import {
+  getDepartamentosByEmpresa,
+  DepartamentoResponse,
+} from "../services/departamentoService";
+import {
+  Ticket,
+  Departamento,
+  Status,
+  Categoria,
+  Prioridade,
+  ImagemSelecionada,
+} from "../types";
 import TicketCard from "../components/TicketCard";
 import TicketDetailSheet from "../components/TicketDetailSheet";
 import Modal from "../components/Modal";
 import FormField from "../components/FormField";
 import Button from "../components/Button";
+import AttachmentPicker from "../components/AttachmentPicker";
 
 type Props = NativeStackScreenProps<RootStackParamList, "HomeUser">;
 
@@ -35,9 +51,10 @@ function mapApiToTicket(t: TicketResponse): Ticket {
     prioridade: t.prioridade as Prioridade,
     departamento: t.departamento.nome,
     id_departamento: t.departamento.id,
-    created_at: new Date().toISOString(),
+    created_at: t.created_at,
     id_usuario: t.usuario.id,
     id_empresa: t.empresa.id,
+    anexos: t.anexos || [],
   };
 }
 
@@ -67,9 +84,12 @@ export default function HomeUserScreen({ navigation }: Props) {
       getTicketsByEmpresa(idEmpresa),
       getDepartamentosByEmpresa(idEmpresa),
     ]);
-    if (ticketsRes.status === "fulfilled") setTickets(ticketsRes.value.map(mapApiToTicket));
+    if (ticketsRes.status === "fulfilled")
+      setTickets(ticketsRes.value.map(mapApiToTicket));
     if (deptsRes.status === "fulfilled")
-      setDepartamentos(deptsRes.value.map((d) => ({ ...d, id_empresa: idEmpresa })));
+      setDepartamentos(
+        deptsRes.value.map((d) => ({ ...d, id_empresa: idEmpresa })),
+      );
   }, [idEmpresa]);
 
   useEffect(() => {
@@ -92,36 +112,56 @@ export default function HomeUserScreen({ navigation }: Props) {
     categoria: Categoria;
     prioridade: Prioridade;
     id_departamento: number;
+    anexo: ImagemSelecionada | null;
   }) => {
     try {
-      const created = await createTicket({
-        titulo: data.titulo,
-        descricao: data.descricao,
-        categoria: data.categoria,
-        prioridade: data.prioridade,
-        id_empresa: idEmpresa,
-        id_usuario: idUsuario,
-        id_departamento: data.id_departamento,
-      });
+      const created = await createTicket(
+        {
+          titulo: data.titulo,
+          descricao: data.descricao,
+          categoria: data.categoria,
+          prioridade: data.prioridade,
+          id_empresa: idEmpresa,
+          id_usuario: idUsuario,
+          id_departamento: data.id_departamento,
+        },
+        data.anexo,
+      );
       setTickets((p) => [...p, mapApiToTicket(created)]);
     } catch (err) {
       console.error("Erro ao criar ticket:", err);
+      Alert.alert(
+        "Não foi possível criar o ticket",
+        err instanceof Error ? err.message : "Tente novamente.",
+      );
+      throw err;
     }
   };
 
   const filtered = tickets.filter(
     (t) =>
       (filterStatus === "todos" || t.status === filterStatus) &&
-      (activeDept === "todos" || t.departamento === departamentos.find((d) => d.id === activeDept)?.nome)
+      (activeDept === "todos" ||
+        t.departamento ===
+          departamentos.find((d) => d.id === activeDept)?.nome),
   );
 
   const totalAbertos = tickets.filter((t) => t.status === "aberto").length;
-  const totalAndamento = tickets.filter((t) => t.status === "em_andamento").length;
+  const totalAndamento = tickets.filter(
+    (t) => t.status === "em_andamento",
+  ).length;
   const totalResolvidos = tickets.filter((t) => t.status === "fechado").length;
-  const totalCriticos = tickets.filter((t) => t.prioridade === "critica").length;
+  const totalCriticos = tickets.filter(
+    (t) => t.prioridade === "critica",
+  ).length;
 
   const initials = user?.nome
-    ? user.nome.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
+    ? user.nome
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
     : "U";
 
   if (loading) {
@@ -137,9 +177,14 @@ export default function HomeUserScreen({ navigation }: Props) {
       <View style={styles.topbar}>
         <View style={{ flex: 1 }}>
           <Text style={styles.topTitle}>Central de Tickets</Text>
-          <Text style={styles.topSub}>Acompanhe suas demandas por departamento</Text>
+          <Text style={styles.topSub}>
+            Acompanhe suas demandas por departamento
+          </Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate("EditProfile")} style={styles.avatar}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("EditProfile")}
+          style={styles.avatar}
+        >
           <Text style={styles.avatarText}>{initials}</Text>
         </TouchableOpacity>
       </View>
@@ -147,18 +192,52 @@ export default function HomeUserScreen({ navigation }: Props) {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: spacing.xxl }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.teal} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.teal}
+          />
+        }
       >
         {/* Stats */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsRow}>
-          <StatCard num={totalAbertos} label="Abertos" color={colors.blue} icon="ellipse-outline" />
-          <StatCard num={totalAndamento} label="Em andamento" color={colors.amber} icon="time-outline" />
-          <StatCard num={totalResolvidos} label="Resolvidos" color={colors.teal} icon="checkmark-circle-outline" />
-          <StatCard num={totalCriticos} label="Críticos" color={colors.danger} icon="warning-outline" />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.statsRow}
+        >
+          <StatCard
+            num={totalAbertos}
+            label="Abertos"
+            color={colors.blue}
+            icon="ellipse-outline"
+          />
+          <StatCard
+            num={totalAndamento}
+            label="Em andamento"
+            color={colors.amber}
+            icon="time-outline"
+          />
+          <StatCard
+            num={totalResolvidos}
+            label="Resolvidos"
+            color={colors.teal}
+            icon="checkmark-circle-outline"
+          />
+          <StatCard
+            num={totalCriticos}
+            label="Críticos"
+            color={colors.danger}
+            icon="warning-outline"
+          />
         </ScrollView>
 
         {/* Department filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
           <FilterChip
             label={`Todos (${tickets.length})`}
             active={activeDept === "todos"}
@@ -169,7 +248,9 @@ export default function HomeUserScreen({ navigation }: Props) {
               key={d.id}
               label={`${d.nome} (${tickets.filter((t) => t.departamento === d.nome).length})`}
               active={activeDept === d.id}
-              onPress={() => setActiveDept(activeDept === d.id ? "todos" : d.id)}
+              onPress={() =>
+                setActiveDept(activeDept === d.id ? "todos" : d.id)
+              }
             />
           ))}
         </ScrollView>
@@ -182,7 +263,14 @@ export default function HomeUserScreen({ navigation }: Props) {
               style={[styles.pill, filterStatus === s.key && styles.pillActive]}
               onPress={() => setFilterStatus(s.key)}
             >
-              <Text style={[styles.pillText, filterStatus === s.key && styles.pillTextActive]}>{s.label}</Text>
+              <Text
+                style={[
+                  styles.pillText,
+                  filterStatus === s.key && styles.pillTextActive,
+                ]}
+              >
+                {s.label}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -191,11 +279,21 @@ export default function HomeUserScreen({ navigation }: Props) {
         <View style={styles.board}>
           {filtered.length === 0 ? (
             <View style={styles.empty}>
-              <Ionicons name="file-tray-outline" size={30} color={colors.muted} />
+              <Ionicons
+                name="file-tray-outline"
+                size={30}
+                color={colors.muted}
+              />
               <Text style={styles.emptyText}>Nenhum ticket encontrado</Text>
             </View>
           ) : (
-            filtered.map((t) => <TicketCard key={t.id} ticket={t} onPress={() => setSelectedTicket(t)} />)
+            filtered.map((t) => (
+              <TicketCard
+                key={t.id}
+                ticket={t}
+                onPress={() => setSelectedTicket(t)}
+              />
+            ))
           )}
         </View>
       </ScrollView>
@@ -204,7 +302,10 @@ export default function HomeUserScreen({ navigation }: Props) {
         <Ionicons name="add" size={26} color="#fff" />
       </TouchableOpacity>
 
-      <TicketDetailSheet ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
+      <TicketDetailSheet
+        ticket={selectedTicket}
+        onClose={() => setSelectedTicket(null)}
+      />
 
       <NewTicketModal
         open={modalOpen}
@@ -240,10 +341,23 @@ function StatCard({
   );
 }
 
-function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function FilterChip({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
   return (
-    <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+    <TouchableOpacity
+      style={[styles.chip, active && styles.chipActive]}
+      onPress={onPress}
+    >
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -256,7 +370,14 @@ function NewTicketModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { titulo: string; descricao: string; categoria: Categoria; prioridade: Prioridade; id_departamento: number }) => void;
+  onSave: (data: {
+    titulo: string;
+    descricao: string;
+    categoria: Categoria;
+    prioridade: Prioridade;
+    id_departamento: number;
+    anexo: ImagemSelecionada | null;
+  }) => Promise<void>;
   departamentos: Departamento[];
 }) {
   const [titulo, setTitulo] = useState("");
@@ -264,23 +385,43 @@ function NewTicketModal({
   const [categoria, setCategoria] = useState<Categoria>("suporte");
   const [prioridade, setPrioridade] = useState<Prioridade>("media");
   const [idDept, setIdDept] = useState<number | null>(null);
+  const [anexo, setAnexo] = useState<ImagemSelecionada | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const dept = idDept ?? departamentos[0]?.id ?? 0;
 
-  const submit = () => {
+  const submit = async () => {
     if (!titulo.trim() || !descricao.trim()) return;
-    onSave({ titulo, descricao, categoria, prioridade, id_departamento: dept });
-    setTitulo("");
-    setDescricao("");
-    setCategoria("suporte");
-    setPrioridade("media");
-    setIdDept(null);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave({
+        titulo,
+        descricao,
+        categoria,
+        prioridade,
+        id_departamento: dept,
+        anexo,
+      });
+      setTitulo("");
+      setDescricao("");
+      setCategoria("suporte");
+      setPrioridade("media");
+      setIdDept(null);
+      setAnexo(null);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Modal visible={open} title="Novo Ticket" onClose={onClose}>
-      <FormField label="Título" placeholder="Descreva brevemente o problema" value={titulo} onChangeText={setTitulo} />
+      <FormField
+        label="Título"
+        placeholder="Descreva brevemente o problema"
+        value={titulo}
+        onChangeText={setTitulo}
+      />
       <FormField
         label="Descrição"
         placeholder="Detalhe o problema ou solicitação..."
@@ -296,23 +437,45 @@ function NewTicketModal({
         {departamentos.map((d) => (
           <TouchableOpacity
             key={d.id}
-            style={[styles.optionPill, dept === d.id && styles.optionPillActive]}
+            style={[
+              styles.optionPill,
+              dept === d.id && styles.optionPillActive,
+            ]}
             onPress={() => setIdDept(d.id)}
           >
-            <Text style={[styles.optionText, dept === d.id && styles.optionTextActive]}>{d.nome}</Text>
+            <Text
+              style={[
+                styles.optionText,
+                dept === d.id && styles.optionTextActive,
+              ]}
+            >
+              {d.nome}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <Text style={styles.sectionLabel}>Categoria</Text>
       <View style={styles.optionsRow}>
-        {(["suporte", "solicitacao", "incidente", "melhoria"] as Categoria[]).map((c) => (
+        {(
+          ["suporte", "solicitacao", "incidente", "melhoria"] as Categoria[]
+        ).map((c) => (
           <TouchableOpacity
             key={c}
-            style={[styles.optionPill, categoria === c && styles.optionPillActive]}
+            style={[
+              styles.optionPill,
+              categoria === c && styles.optionPillActive,
+            ]}
             onPress={() => setCategoria(c)}
           >
-            <Text style={[styles.optionText, categoria === c && styles.optionTextActive]}>{c}</Text>
+            <Text
+              style={[
+                styles.optionText,
+                categoria === c && styles.optionTextActive,
+              ]}
+            >
+              {c}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -322,17 +485,33 @@ function NewTicketModal({
         {(["baixa", "media", "alta", "critica"] as Prioridade[]).map((p) => (
           <TouchableOpacity
             key={p}
-            style={[styles.optionPill, prioridade === p && styles.optionPillActive]}
+            style={[
+              styles.optionPill,
+              prioridade === p && styles.optionPillActive,
+            ]}
             onPress={() => setPrioridade(p)}
           >
-            <Text style={[styles.optionText, prioridade === p && styles.optionTextActive]}>{p}</Text>
+            <Text
+              style={[
+                styles.optionText,
+                prioridade === p && styles.optionTextActive,
+              ]}
+            >
+              {p}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      <AttachmentPicker value={anexo} onChange={setAnexo} />
+
       <View style={styles.modalFooter}>
         <Button title="Cancelar" variant="ghost" onPress={onClose} />
-        <Button title="Abrir Ticket" onPress={submit} />
+        <Button
+          title={saving ? "Enviando..." : "Abrir Ticket"}
+          onPress={submit}
+          disabled={saving}
+        />
       </View>
     </Modal>
   );
@@ -340,7 +519,12 @@ function NewTicketModal({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  loadingScreen: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
+  loadingScreen: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   topbar: {
     flexDirection: "row",
     alignItems: "center",
@@ -362,7 +546,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   avatarText: { color: "#fff", fontWeight: "bold", fontSize: 13 },
-  statsRow: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, gap: spacing.md },
+  statsRow: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    gap: spacing.md,
+  },
   statCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -374,7 +562,13 @@ const styles = StyleSheet.create({
     padding: 12,
     minWidth: 140,
   },
-  statIco: { width: 34, height: 34, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
+  statIco: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   statNum: { fontSize: 18, fontWeight: "bold" },
   statLbl: { fontSize: 11, color: colors.muted, marginTop: 1 },
   chipsRow: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, gap: 8 },
@@ -403,7 +597,11 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: colors.teal },
   pillText: { fontSize: 12, color: colors.muted },
   pillTextActive: { color: "#fff", fontWeight: "600" },
-  board: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, gap: spacing.md },
+  board: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    gap: spacing.md,
+  },
   empty: { alignItems: "center", paddingVertical: 50, gap: 10 },
   emptyText: { color: colors.muted, fontSize: 13 },
   fab: {
@@ -435,5 +633,10 @@ const styles = StyleSheet.create({
   optionPillActive: { backgroundColor: colors.teal, borderColor: colors.teal },
   optionText: { fontSize: 12, color: colors.muted },
   optionTextActive: { color: "#fff", fontWeight: "600" },
-  modalFooter: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm, marginTop: spacing.md },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
 });

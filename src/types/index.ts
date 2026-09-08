@@ -2,7 +2,12 @@ export type Status = "aberto" | "em_andamento" | "fechado";
 export type Categoria = "suporte" | "solicitacao" | "incidente" | "melhoria";
 export type Prioridade = "baixa" | "media" | "alta" | "critica";
 export type Permissao = "admin" | "usuario";
-export type NavPage = "dashboard" | "tickets" | "usuarios" | "pendentes" | "departamentos";
+export type NavPage =
+  | "dashboard"
+  | "tickets"
+  | "usuarios"
+  | "pendentes"
+  | "departamentos";
 
 export interface Empresa {
   id: number;
@@ -41,6 +46,23 @@ export interface Ticket {
   created_at: string;
   id_usuario: number;
   id_empresa: number;
+  anexos: Anexo[];
+}
+
+export interface Anexo {
+  id: number;
+  nome_original: string;
+  mime_type: string;
+  tamanho: number;
+  url: string;
+  created_at: string;
+}
+
+export interface ImagemSelecionada {
+  uri: string;
+  nome: string;
+  mime_type: string;
+  tamanho?: number;
 }
 
 export interface AuthUser {

@@ -1,31 +1,66 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Ticket } from "../types";
-import { colors, statusConfig, prioridadeConfig, categoriaIcons, radius, spacing } from "../theme/colors";
+import {
+  colors,
+  statusConfig,
+  prioridadeConfig,
+  categoriaIcons,
+  radius,
+  spacing,
+} from "../theme/colors";
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  });
 }
 
-export default function TicketCard({ ticket, onPress }: { ticket: Ticket; onPress: () => void }) {
+export default function TicketCard({
+  ticket,
+  onPress,
+}: {
+  ticket: Ticket;
+  onPress: () => void;
+}) {
   const st = statusConfig[ticket.status];
   const pr = prioridadeConfig[ticket.prioridade];
-  const iconName = (categoriaIcons[ticket.categoria] || "document-outline") as keyof typeof Ionicons.glyphMap;
+  const iconName = (categoriaIcons[ticket.categoria] ||
+    "document-outline") as keyof typeof Ionicons.glyphMap;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
       <View style={styles.top}>
         <View style={styles.iconWrap}>
           <Ionicons name={iconName} size={14} color={colors.teal} />
         </View>
         <Text style={styles.id}>#{ticket.id}</Text>
-        {ticket.prioridade === "critica" && <Text style={styles.critica}>CRÍTICO</Text>}
+        {ticket.prioridade === "critica" && (
+          <Text style={styles.critica}>CRÍTICO</Text>
+        )}
       </View>
-      <Text style={styles.title} numberOfLines={2}>{ticket.titulo}</Text>
-      <Text style={styles.desc} numberOfLines={2}>{ticket.descricao}</Text>
+      <Text style={styles.title} numberOfLines={2}>
+        {ticket.titulo}
+      </Text>
+      <Text style={styles.desc} numberOfLines={2}>
+        {ticket.descricao}
+      </Text>
+      {(ticket.anexos?.length || 0) > 0 && (
+        <View style={styles.attachmentBadge}>
+          <Ionicons name="attach" size={12} color={colors.teal} />
+          <Text style={styles.attachmentText}>{ticket.anexos.length}</Text>
+        </View>
+      )}
       <View style={styles.footer}>
         <View style={[styles.statusPill, { backgroundColor: st.bg }]}>
-          <Text style={[styles.statusText, { color: st.color }]}>{st.label}</Text>
+          <Text style={[styles.statusText, { color: st.color }]}>
+            {st.label}
+          </Text>
         </View>
         <View style={styles.prio}>
           <View style={[styles.dot, { backgroundColor: pr.color }]} />
@@ -56,10 +91,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   id: { fontSize: 11, color: colors.muted },
-  critica: { fontSize: 11, fontWeight: "bold", color: colors.danger, marginLeft: "auto" },
-  title: { fontSize: 14, fontWeight: "bold", color: colors.text, lineHeight: 19 },
+  critica: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: colors.danger,
+    marginLeft: "auto",
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: colors.text,
+    lineHeight: 19,
+  },
   desc: { fontSize: 12, color: colors.muted, lineHeight: 17 },
-  footer: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 2 },
+  attachmentBadge: { flexDirection: "row", alignItems: "center", gap: 3 },
+  attachmentText: { color: colors.teal, fontSize: 11 },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+    marginTop: 2,
+  },
   statusPill: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 10 },
   statusText: { fontSize: 11 },
   prio: { flexDirection: "row", alignItems: "center", gap: 4 },

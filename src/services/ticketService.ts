@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { File } from "expo-file-system";
 import { Anexo, ImagemSelecionada } from "../types";
 
 export interface TicketResponse {
@@ -56,25 +57,16 @@ export function getTicketById(id: number) {
 }
 
 function appendImage(form: FormData, image: ImagemSelecionada) {
-  form.append("anexo", {
-    uri: image.uri,
-    name: image.nome,
-    type: image.mime_type,
-  } as unknown as Blob);
+  const file = new File(image.uri);
+  form.append("anexo", file);
 }
 
-export function createTicket(
+export async function createTicket(
   data: CreateTicketPayload,
   image?: ImagemSelecionada | null,
 ) {
-  if (!image) return api.post<TicketResponse>("/ticket", data);
-
-  const form = new FormData();
-  Object.entries(data).forEach(([key, value]) =>
-    form.append(key, String(value)),
-  );
-  appendImage(form, image);
-  return api.postForm<TicketResponse>("/ticket", form);
+  const ticket = await api.post<TicketResponse>("/ticket", data);
+  return image ? uploadTicketAttachment(ticket.id, image) : ticket;
 }
 
 export function uploadTicketAttachment(id: number, image: ImagemSelecionada) {

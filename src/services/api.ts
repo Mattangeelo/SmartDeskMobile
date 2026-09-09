@@ -7,7 +7,7 @@ import Constants from "expo-constants";
 export const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (Constants.expoConfig?.extra?.apiUrl as string) ||
-  "https://meuapp.local/api";
+  "http://10.0.0.62:3000";
 
 const TOKEN_KEY = "token";
 const USER_KEY = "user";

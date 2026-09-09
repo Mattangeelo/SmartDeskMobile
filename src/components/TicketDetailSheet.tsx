@@ -27,9 +27,11 @@ export default function TicketDetailSheet({
   onClose: () => void;
 }) {
   const [token, setToken] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     getToken().then(setToken);
+    setPreviewUrl(null);
   }, [ticket?.id]);
 
   if (!ticket) return null;
@@ -92,7 +94,12 @@ export default function TicketDetailSheet({
               <View style={styles.section}>
                 <Text style={styles.label}>Anexos</Text>
                 {ticket.anexos.map((attachment) => (
-                  <View key={attachment.id} style={styles.attachmentCard}>
+                  <TouchableOpacity
+                    key={attachment.id}
+                    style={styles.attachmentCard}
+                    onPress={() => setPreviewUrl(attachment.url)}
+                    activeOpacity={0.85}
+                  >
                     <Image
                       source={{
                         uri: `${BASE_URL.replace(/\/$/, "")}${attachment.url}`,
@@ -112,7 +119,7 @@ export default function TicketDetailSheet({
                         {(attachment.tamanho / 1024 / 1024).toFixed(2)} MB
                       </Text>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             )}
@@ -158,6 +165,35 @@ export default function TicketDetailSheet({
           </ScrollView>
         </View>
       </View>
+
+      <Modal
+        visible={previewUrl !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewUrl(null)}
+      >
+        <View style={styles.previewOverlay}>
+          <TouchableOpacity
+            style={styles.previewClose}
+            onPress={() => setPreviewUrl(null)}
+            accessibilityLabel="Fechar prévia do anexo"
+          >
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          {previewUrl && (
+            <Image
+              source={{
+                uri: `${BASE_URL.replace(/\/$/, "")}${previewUrl}`,
+                headers: token
+                  ? { Authorization: `Bearer ${token}` }
+                  : undefined,
+              }}
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -243,6 +279,21 @@ const styles = StyleSheet.create({
   },
   attachmentName: { flex: 1, color: colors.text, fontSize: 12 },
   attachmentSize: { color: colors.muted, fontSize: 10 },
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.94)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: spacing.lg,
+  },
+  previewImage: { width: "100%", height: "85%" },
+  previewClose: {
+    position: "absolute",
+    top: 54,
+    right: 24,
+    zIndex: 1,
+    padding: 8,
+  },
   meta: {
     flexDirection: "row",
     gap: 15,

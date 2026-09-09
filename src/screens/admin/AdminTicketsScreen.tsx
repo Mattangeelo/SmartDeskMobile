@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -24,6 +25,7 @@ import Modal, { Confirm } from "../../components/Modal";
 import FormField from "../../components/FormField";
 import Button from "../../components/Button";
 import AttachmentPicker from "../../components/AttachmentPicker";
+import { BASE_URL, getToken } from "../../services/api";
 
 type Props = BottomTabScreenProps<AdminTabParamList, "Tickets">;
 
@@ -439,12 +441,7 @@ function TicketFormModal({
         <View style={styles.existingAttachments}>
           <Text style={styles.sectionLabel}>Anexos atuais</Text>
           {ticket.anexos.map((item) => (
-            <View key={item.id} style={styles.attachmentRow}>
-              <Ionicons name="image-outline" size={16} color={colors.teal} />
-              <Text style={styles.attachmentName} numberOfLines={1}>
-                {item.nome_original}
-              </Text>
-            </View>
+            <ExistingAttachmentPreview key={item.id} attachment={item} />
           ))}
         </View>
       )}
@@ -460,6 +457,38 @@ function TicketFormModal({
         />
       </View>
     </Modal>
+  );
+}
+
+function ExistingAttachmentPreview({
+  attachment,
+}: {
+  attachment: Ticket["anexos"][number];
+}) {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getToken().then(setToken);
+  }, []);
+
+  return (
+    <View style={styles.attachmentRow}>
+      <Image
+        source={{
+          uri: `${BASE_URL.replace(/\/$/, "")}${attachment.url}`,
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }}
+        style={styles.attachmentThumbnail}
+      />
+      <View style={styles.attachmentMeta}>
+        <Text style={styles.attachmentName} numberOfLines={1}>
+          {attachment.nome_original}
+        </Text>
+        <Text style={styles.attachmentSize}>
+          {(attachment.tamanho / 1024 / 1024).toFixed(2)} MB
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -553,7 +582,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm,
   },
+  attachmentThumbnail: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.sm,
+    backgroundColor: colors.bg,
+  },
+  attachmentMeta: { flex: 1, gap: 4 },
   attachmentName: { color: colors.text, fontSize: 12, flex: 1 },
+  attachmentSize: { color: colors.muted, fontSize: 10 },
   modalFooter: {
     flexDirection: "row",
     justifyContent: "flex-end",

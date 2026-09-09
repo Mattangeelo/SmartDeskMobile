@@ -12,7 +12,8 @@
         {
           "photosPermission": "Permita que o SmartDesk acesse suas fotos para anexar imagens aos tickets."
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "splash": {
       "backgroundColor": "#1e1e1e"

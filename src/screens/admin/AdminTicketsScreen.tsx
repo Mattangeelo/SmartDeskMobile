@@ -3,6 +3,8 @@ import {
   View,
   Text,
   Image,
+  Modal as RNModal,
+  Platform,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -466,29 +468,127 @@ function ExistingAttachmentPreview({
   attachment: Ticket["anexos"][number];
 }) {
   const [token, setToken] = useState<string | null>(null);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   useEffect(() => {
-    getToken().then(setToken);
+    getToken().then(setToken).catch(() => setLoadError(true));
   }, []);
 
+  useEffect(() => {
+    if (!token) return;
+
+    const attachmentPaths = attachment.url.endsWith("/arquivo")
+      ? [attachment.url.replace(/\/arquivo$/, ""), attachment.url]
+      : [attachment.url, `${attachment.url}/arquivo`];
+    const baseUrl = BASE_URL.replace(/\/$/, "");
+    const url = `${baseUrl}${attachmentPaths[0]}`;
+
+    if (Platform.OS !== "web") {
+      setImageUri(url);
+      return;
+    }
+
+    let active = true;
+    let objectUrl: string | null = null;
+    setImageUri(null);
+    setLoadError(false);
+
+    const fetchAttachment = async () => {
+      for (const path of attachmentPaths) {
+        const response = await fetch(`${baseUrl}${path}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (response.status === 404) continue;
+        if (!response.ok) throw new Error(`Erro ${response.status}`);
+        return response.blob();
+      }
+      throw new Error("Anexo não encontrado");
+    };
+
+    fetchAttachment()
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        if (active) setImageUri(objectUrl);
+      })
+      .catch(() => {
+        if (active) setLoadError(true);
+      });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [attachment.url, token]);
+
+  const source = imageUri
+    ? {
+        uri: imageUri,
+        ...(Platform.OS === "web" ? {} : { headers: { Authorization: `Bearer ${token}` } }),
+      }
+    : undefined;
+
   return (
-    <View style={styles.attachmentRow}>
-      <Image
-        source={{
-          uri: `${BASE_URL.replace(/\/$/, "")}${attachment.url}`,
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    <>
+      <TouchableOpacity
+        style={styles.attachmentRow}
+        onPress={() => {
+          setLoadError(false);
+          setPreviewVisible(true);
         }}
-        style={styles.attachmentThumbnail}
-      />
-      <View style={styles.attachmentMeta}>
-        <Text style={styles.attachmentName} numberOfLines={1}>
-          {attachment.nome_original}
-        </Text>
-        <Text style={styles.attachmentSize}>
-          {(attachment.tamanho / 1024 / 1024).toFixed(2)} MB
-        </Text>
-      </View>
-    </View>
+        disabled={!source}
+        accessibilityRole="button"
+        accessibilityLabel={`Visualizar anexo ${attachment.nome_original}`}
+      >
+        {source ? (
+          <Image source={source} style={styles.attachmentThumbnail} />
+        ) : (
+          <View style={styles.attachmentThumbnail} />
+        )}
+        <View style={styles.attachmentMeta}>
+          <Text style={styles.attachmentName} numberOfLines={1}>
+            {attachment.nome_original}
+          </Text>
+          <Text style={styles.attachmentSize}>
+            {(attachment.tamanho / 1024 / 1024).toFixed(2)} MB
+          </Text>
+          <Text style={styles.attachmentSize}>Toque para visualizar</Text>
+        </View>
+        <Ionicons name="expand-outline" size={20} color={colors.teal} />
+      </TouchableOpacity>
+      <RNModal
+        visible={previewVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewVisible(false)}
+      >
+        <View style={styles.previewOverlay}>
+          <TouchableOpacity
+            style={styles.previewClose}
+            onPress={() => setPreviewVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Fechar imagem"
+          >
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          {loadError ? (
+            <Text style={styles.previewError}>
+              Não foi possível carregar a imagem. Feche e tente novamente.
+            </Text>
+          ) : previewVisible && source ? (
+            <Image
+              source={source}
+              style={styles.previewImage}
+              resizeMode="contain"
+              accessibilityLabel={attachment.nome_original}
+              onError={() => setLoadError(true)}
+            />
+          ) : null}
+        </View>
+      </RNModal>
+    </>
   );
 }
 
@@ -589,6 +689,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   attachmentMeta: { flex: 1, gap: 4 },
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.94)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: spacing.lg,
+  },
+  previewError: { color: colors.text, textAlign: "center" },
+  previewImage: { width: "100%", height: "85%" },
+  previewClose: {
+    position: "absolute",
+    top: 54,
+    right: 24,
+    zIndex: 1,
+    padding: 8,
+  },
   attachmentName: { color: colors.text, fontSize: 12, flex: 1 },
   attachmentSize: { color: colors.muted, fontSize: 10 },
   modalFooter: {

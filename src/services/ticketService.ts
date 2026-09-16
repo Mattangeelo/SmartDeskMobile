@@ -1,5 +1,5 @@
 import { api } from "./api";
-import { File } from "expo-file-system";
+import { Platform } from "react-native";
 import { Anexo, ImagemSelecionada } from "../types";
 
 export interface TicketResponse {
@@ -56,9 +56,21 @@ export function getTicketById(id: number) {
   return api.get<TicketResponse>(`/ticket/one/${id}`);
 }
 
-function appendImage(form: FormData, image: ImagemSelecionada) {
-  const file = new File(image.uri);
-  form.append("anexo", file);
+async function appendImage(form: FormData, image: ImagemSelecionada) {
+  if (Platform.OS === "web") {
+    const response = await fetch(image.uri);
+    if (!response.ok) throw new Error("Não foi possível ler a imagem selecionada.");
+    const blob = await response.blob();
+    form.append("anexo", blob, image.nome);
+    return;
+  }
+
+  // React Native uploads local files through a URI descriptor.
+  form.append("anexo", {
+    uri: image.uri,
+    name: image.nome,
+    type: image.mime_type,
+  } as unknown as Blob);
 }
 
 export async function createTicket(
@@ -69,9 +81,9 @@ export async function createTicket(
   return image ? uploadTicketAttachment(ticket.id, image) : ticket;
 }
 
-export function uploadTicketAttachment(id: number, image: ImagemSelecionada) {
+export async function uploadTicketAttachment(id: number, image: ImagemSelecionada) {
   const form = new FormData();
-  appendImage(form, image);
+  await appendImage(form, image);
   return api.postForm<TicketResponse>(`/ticket/${id}/anexos`, form);
 }
 

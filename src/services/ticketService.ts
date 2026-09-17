@@ -1,5 +1,4 @@
 import { api } from "./api";
-import { Platform } from "react-native";
 import { Anexo, ImagemSelecionada } from "../types";
 
 export interface TicketResponse {
@@ -57,20 +56,16 @@ export function getTicketById(id: number) {
 }
 
 async function appendImage(form: FormData, image: ImagemSelecionada) {
-  if (Platform.OS === "web") {
-    const response = await fetch(image.uri);
-    if (!response.ok) throw new Error("Não foi possível ler a imagem selecionada.");
-    const blob = await response.blob();
-    form.append("anexo", blob, image.nome);
-    return;
+  // Expo's fetch implementation only accepts a real Blob (or a File) as a
+  // binary FormData part. The React Native `{ uri, name, type }` descriptor
+  // is rejected before the request is sent.
+  const response = await fetch(image.uri);
+  if (!response.ok) {
+    throw new Error("Não foi possível ler a imagem selecionada.");
   }
 
-  // React Native uploads local files through a URI descriptor.
-  form.append("anexo", {
-    uri: image.uri,
-    name: image.nome,
-    type: image.mime_type,
-  } as unknown as Blob);
+  const blob = await response.blob();
+  form.append("anexo", blob, image.nome);
 }
 
 export async function createTicket(

@@ -64,7 +64,10 @@ async function appendImage(form: FormData, image: ImagemSelecionada) {
     throw new Error("Não foi possível ler a imagem selecionada.");
   }
 
-  const blob = await response.blob();
+  const originalBlob = await response.blob();
+  // Local asset responses on iOS commonly omit the Blob MIME type. Explicitly
+  // set it so multipart does not send a valid PNG/JPEG as application/octet-stream.
+  const blob = originalBlob.slice(0, originalBlob.size, image.mime_type);
   form.append("anexo", blob, image.nome);
 }
 

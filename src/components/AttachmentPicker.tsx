@@ -47,7 +47,12 @@ export default function AttachmentPicker({
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsMultipleSelection: false,
-      quality: 1,
+      allowsEditing: false,
+      // iOS stores camera photos as HEIC by default. Requesting a compatible
+      // representation makes PhotoKit provide JPEG, which our API supports.
+      preferredAssetRepresentationMode:
+        ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+      quality: 0.85,
     });
     if (result.canceled) return;
 

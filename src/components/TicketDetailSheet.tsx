@@ -18,6 +18,7 @@ import {
   spacing,
 } from "../theme/colors";
 import { BASE_URL, getToken } from "../services/api";
+import TicketHistoryPanel from './TicketHistoryPanel';
 
 export default function TicketDetailSheet({
   ticket,
@@ -137,31 +138,7 @@ export default function TicketDetailSheet({
               </View>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.label}>Histórico</Text>
-              <View style={styles.timeline}>
-                <TimelineItem
-                  color={colors.blue}
-                  action="Ticket aberto"
-                  time={new Date(ticket.created_at).toLocaleDateString("pt-BR")}
-                />
-                {ticket.status !== "aberto" && (
-                  <TimelineItem
-                    color={colors.amber}
-                    action="Em andamento"
-                    time="Atribuído à equipe"
-                  />
-                )}
-                {ticket.status === "fechado" && (
-                  <TimelineItem
-                    color={colors.teal}
-                    action="Fechado"
-                    time="Ticket finalizado"
-                    last
-                  />
-                )}
-              </View>
-            </View>
+            <TicketHistoryPanel key={ticket.id} ticketId={ticket.id} />
           </ScrollView>
         </View>
       </View>

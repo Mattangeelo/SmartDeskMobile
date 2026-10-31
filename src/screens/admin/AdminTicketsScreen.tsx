@@ -24,6 +24,7 @@ import {
 } from "../../types";
 import TicketCard from "../../components/TicketCard";
 import Modal, { Confirm } from "../../components/Modal";
+import TicketHistoryPanel from '../../components/TicketHistoryPanel';
 import FormField from "../../components/FormField";
 import Button from "../../components/Button";
 import AttachmentPicker from "../../components/AttachmentPicker";
@@ -449,6 +450,7 @@ function TicketFormModal({
       )}
 
       <AttachmentPicker value={anexo} onChange={setAnexo} />
+      {isEdit && ticket.id && <TicketHistoryPanel key={ticket.id} ticketId={ticket.id} />}
 
       <View style={styles.modalFooter}>
         <Button title="Cancelar" variant="ghost" onPress={onClose} />

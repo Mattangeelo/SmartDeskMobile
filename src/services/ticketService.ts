@@ -96,3 +96,18 @@ export function updateTicketStatus(id: number, status: string) {
 export function deleteTicket(id: number) {
   return api.del<{ message: string }>(`/ticket/${id}`);
 }
+
+export interface TicketHistoryEntry {
+  id: number;
+  event_id: string;
+  autor_id: number;
+  autor_papel: string;
+  operacao: string;
+  estado_anterior: string | null;
+  estado_novo: string;
+  created_at: string;
+}
+
+export function getTicketHistory(id: number, page = 1) {
+  return api.get<{ items: TicketHistoryEntry[]; total: number; page: number; pageSize: number }>(`/ticket/${id}/historico?page=${page}&pageSize=20`);
+}

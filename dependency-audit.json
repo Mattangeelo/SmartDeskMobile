@@ -1,0 +1,294 @@
+{
+  "repo": "SmartDeskMobile",
+  "counts": {
+    "info": 0,
+    "low": 1,
+    "moderate": 8,
+    "high": 10,
+    "critical": 1,
+    "total": 20
+  },
+  "issues": [
+    {
+      "name": "@expo/cli",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": []
+    },
+    {
+      "name": "@react-navigation/core",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": []
+    },
+    {
+      "name": "@xmldom/xmldom",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "xmldom: XML fragment injection via invalid EntityReference.nodeName during requireWellFormed serialization",
+          "url": "https://github.com/advisories/GHSA-6gmq-8vp8-gcm6"
+        },
+        {
+          "title": "xmldom: XML fragment injection via invalid EntityReference.nodeName during requireWellFormed serialization",
+          "url": "https://github.com/advisories/GHSA-6gmq-8vp8-gcm6"
+        },
+        {
+          "title": "xmldom: HTML raw-text closing-tag case mismatch causes output amplification",
+          "url": "https://github.com/advisories/GHSA-6mj3-qw4j-hgrw"
+        },
+        {
+          "title": "xmldom: Processing Instruction Target Injection Bypasses requireWellFormed",
+          "url": "https://github.com/advisories/GHSA-c7q8-3ch8-vqpv"
+        },
+        {
+          "title": "xmldom: Processing Instruction Target Injection Bypasses requireWellFormed",
+          "url": "https://github.com/advisories/GHSA-c7q8-3ch8-vqpv"
+        },
+        {
+          "title": "xmldom: requireWellFormed element/attribute name validation is bypassable via an embedded line terminator",
+          "url": "https://github.com/advisories/GHSA-jxjr-3g7g-3944"
+        },
+        {
+          "title": "xmldom: DocType `name` Injection Bypasses requireWellFormed",
+          "url": "https://github.com/advisories/GHSA-27p8-2357-5qqv"
+        },
+        {
+          "title": "xmldom: DocType `name` Injection Bypasses requireWellFormed",
+          "url": "https://github.com/advisories/GHSA-27p8-2357-5qqv"
+        },
+        {
+          "title": "xmldom: Creation-time XML Name/QName validation is bypassable via an embedded line terminator, allowing injection on the default serialization path",
+          "url": "https://github.com/advisories/GHSA-3px3-54cx-rmw9"
+        },
+        {
+          "title": "xmldom: requireWellFormed DocType publicId/systemId validation is bypassable via an embedded line terminator",
+          "url": "https://github.com/advisories/GHSA-vr34-hp96-76pp"
+        },
+        {
+          "title": "xmldom: Parser silently accepts a not-well-formed end tag whose name is followed by a line break and trailing content",
+          "url": "https://github.com/advisories/GHSA-6h8r-xr42-gp59"
+        },
+        {
+          "title": "xmldom: Parser silently accepts a not-well-formed end tag whose name is followed by a line break and trailing content",
+          "url": "https://github.com/advisories/GHSA-6h8r-xr42-gp59"
+        },
+        {
+          "title": "xmldom: Quadratic-time attribute deduplication",
+          "url": "https://github.com/advisories/GHSA-8344-3jmq-59r6"
+        },
+        {
+          "title": "xmldom: Quadratic-time attribute deduplication",
+          "url": "https://github.com/advisories/GHSA-8344-3jmq-59r6"
+        },
+        {
+          "title": "xmldom: End-tag Whitespace-Trim Regex ReDoS — quadratic backtracking in the 0.8.x end-tag parser",
+          "url": "https://github.com/advisories/GHSA-x4fp-j954-r2f4"
+        },
+        {
+          "title": "xmldom: Quadratic-memory consumption",
+          "url": "https://github.com/advisories/GHSA-965w-775f-mr7g"
+        },
+        {
+          "title": "xmldom: Quadratic-memory consumption",
+          "url": "https://github.com/advisories/GHSA-965w-775f-mr7g"
+        },
+        {
+          "title": "xmldom: Quadratic-time parsing via the malformed-input recovery path — `parseElementStartPart` re-scan and `normalize()` adjacent-text merge",
+          "url": "https://github.com/advisories/GHSA-93r5-fhx6-vmg9"
+        },
+        {
+          "title": "xmldom: Quadratic-time parsing via the malformed-input recovery path — `parseElementStartPart` re-scan and `normalize()` adjacent-text merge",
+          "url": "https://github.com/advisories/GHSA-93r5-fhx6-vmg9"
+        }
+      ]
+    },
+    {
+      "name": "brace-expansion",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service",
+          "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr"
+        },
+        {
+          "title": "brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion",
+          "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7"
+        },
+        {
+          "title": "brace-expansion: DoS via uncontrolled recursion in parseCommaParts causing stack exhaustion",
+          "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
+        }
+      ]
+    },
+    {
+      "name": "compression",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "compression vulnerable to Denial of Service via memory leak on premature response close",
+          "url": "https://github.com/advisories/GHSA-vc2v-76pw-4v95"
+        }
+      ]
+    },
+    {
+      "name": "decode-uri-component",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "decode-uri-component: Denial of service via exponential decoding of malformed percent-encoded input",
+          "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr"
+        },
+        {
+          "title": "decode-uri-component vulnerable to denial of service via quadratic replacement of percent-encoded runs",
+          "url": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f"
+        }
+      ]
+    },
+    {
+      "name": "node-forge",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements",
+          "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv"
+        },
+        {
+          "title": "Forge: ASN.1 OID first arc truncation in asn1.oidToDer",
+          "url": "https://github.com/advisories/GHSA-4642-5mcj-2rqw"
+        },
+        {
+          "title": "Forge: Prototype Pollution in forge.http cookie handling via a malicious Set-Cookie",
+          "url": "https://github.com/advisories/GHSA-6wvx-3r32-xmcg"
+        },
+        {
+          "title": "Forge: TLS client crash when the server sends no certificate",
+          "url": "https://github.com/advisories/GHSA-525v-9gp9-w22h"
+        },
+        {
+          "title": "Forge: Regular expression denial of service in PEM decoding (pem.decode)",
+          "url": "https://github.com/advisories/GHSA-7wch-p9px-956x"
+        },
+        {
+          "title": "Forge: Denial of Service via infinite loop in BigInteger.modInverse() with negative input (incomplete fix of CVE-2026-33891)",
+          "url": "https://github.com/advisories/GHSA-h6cr-wjv9-3cpp"
+        },
+        {
+          "title": "Forge: verifyCertificateChain() removes trusted CA certificates with the same subject from the CA store",
+          "url": "https://github.com/advisories/GHSA-4487-j8r4-4g2f"
+        },
+        {
+          "title": "Forge: AES-GCM authentication bypass via unvalidated tagLength option",
+          "url": "https://github.com/advisories/GHSA-5cwg-6vw7-rj6p"
+        },
+        {
+          "title": "Forge: PKCS#12 MAC forgery and constant-key PBE via zero iteration count",
+          "url": "https://github.com/advisories/GHSA-jc66-7q78-782g"
+        },
+        {
+          "title": "Forge: Denial of service in TLS record processing via a record interleaved with a fragmented handshake message",
+          "url": "https://github.com/advisories/GHSA-8hrf-8g6f-7xwp"
+        },
+        {
+          "title": "Forge: Denial of service in TLS record processing via call stack exhaustion",
+          "url": "https://github.com/advisories/GHSA-hqq3-7jhf-c5jx"
+        },
+        {
+          "title": "Forge: X.509 basicConstraints bypass in verifyCertificateChain() via deprecated extension OIDs 2.5.29.10 and 2.5.29.13",
+          "url": "https://github.com/advisories/GHSA-5x38-2vff-x55p"
+        },
+        {
+          "title": "Forge: Certificate signature verified with the issuer's RSA signature scheme",
+          "url": "https://github.com/advisories/GHSA-9wg5-mj3p-v49q"
+        },
+        {
+          "title": "Forge: Incomplete PKCS#7 padding validation in AES/DES CBC and ECB decryption",
+          "url": "https://github.com/advisories/GHSA-2vgq-wchc-25w7"
+        },
+        {
+          "title": "Forge: X.509 pathLenConstraint not enforced by verifyCertificateChain() for CA certificates without keyUsage",
+          "url": "https://github.com/advisories/GHSA-h46v-rmh6-fq4f"
+        },
+        {
+          "title": "Forge: ASN.1 resource exhaustion via BIT STRING decoding in asn1.fromDer",
+          "url": "https://github.com/advisories/GHSA-rhr8-3pm8-cq29"
+        },
+        {
+          "title": "Forge: RSA PKCS#1 v1.5 signature forgery via non-canonical DigestInfo encoding",
+          "url": "https://github.com/advisories/GHSA-6qrw-m8cv-hcxf"
+        },
+        {
+          "title": "Forge: Ed25519 signature verification accepts small-order public keys",
+          "url": "https://github.com/advisories/GHSA-6889-vf6x-f3g5"
+        },
+        {
+          "title": "Forge: TLS client crash on an unsupported ServerHello compression method",
+          "url": "https://github.com/advisories/GHSA-w4xr-hqv8-ch44"
+        },
+        {
+          "title": "Forge: ReDoS in forge.http response header and cookie trimming",
+          "url": "https://github.com/advisories/GHSA-6cv4-p8m7-4r25"
+        },
+        {
+          "title": "Forge: TLS client crash on a handshake record received without a session",
+          "url": "https://github.com/advisories/GHSA-j8rw-jp99-435v"
+        }
+      ]
+    },
+    {
+      "name": "query-string",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": []
+    },
+    {
+      "name": "shell-quote",
+      "severity": "critical",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "shell-quote: `quote()` command injection via a line terminator in a token after a `{ comment }` token",
+          "url": "https://github.com/advisories/GHSA-pqg4-j6r4-53mv"
+        }
+      ]
+    },
+    {
+      "name": "source-map-js",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+          "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q"
+        }
+      ]
+    },
+    {
+      "name": "zod",
+      "severity": "high",
+      "direct": false,
+      "fix": true,
+      "via": [
+        {
+          "title": "Zod can exhaust memory while validating oversized constrained collections",
+          "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
+        }
+      ]
+    }
+  ]
+}
